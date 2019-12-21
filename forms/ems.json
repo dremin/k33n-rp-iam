@@ -1,0 +1,204 @@
+{
+	"form": [
+		{
+			"label": "Provide any footage you have of you role playing (in FiveM or any other RP game)",
+			"subLabel": "Please link the URL of any RP footage you may have",
+			"type": "text",
+			"required": false
+		},
+		{
+			"label": "Real Age",
+			"subLabel": "Your age outside of RP",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "What is your first language?",
+			"subLabel": "",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "I have a working, clear sounding microphone/headset.",
+			"subLabel": "https://www.teamspeak.com/en/downloads/",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes" ]
+		},
+		{
+			"label": "Do you have Teamspeak or are willing to install and use Teamspeak for communication?",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes" ]
+		},
+		{
+			"label": "Country & Time Zone",
+			"subLabel": "",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "How many hours do you have in FiveM?",
+			"subLabel": "Enter the number of hours you have played FiveM.",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "In total, how many hours have you played on K33N RP?",
+			"subLabel": "Enter the number of hours you have played on K33N RP.",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "Are you being referred by someone? If yes, who?",
+			"subLabel": "Enter the name of the individual who referred you.",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "Have you been on a ride along?",
+			"subLabel": "Ride alongs will be given after your application has been submitted and approved.",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes","No" ]
+		},
+		{
+			"label": "If yes, who gave you the ride along?",
+			"subLabel": "Enter the name of the individual who gave you the ride along.",
+			"type": "text",
+			"required": false
+		},
+		{
+			"label": "Have you ever been banned from our servers? If so, why?",
+			"subLabel": "This is not an automatic disqualification. Honesty is important when being a potential police dept. candidate for K33N RP.",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Do you have any real world or in-game medical experience?",
+			"subLabel": "No experience is required, this just helps us better understand ones experience.",
+			"type": "textbox",
+			"required": false
+		},
+		{
+			"label": "In Character's background/story?",
+			"subLabel": "Provide detail of your character's background.",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Why do you wish to join the EMS team?",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Q1: You are driving along a Street when you notice someone is down on the sidewalk but you have not received a 911 call. What should you do?",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Stop and tell them Out of Character that they need to call 911 till you will treat them", "Just drive past as they have to call 911 for EMS to respond", "Stop next to them and just revive them without doing anything else", "Stop and treat the person on the floor for any injuries that they may have in the correct manner" ]
+		},
+		{
+			"label": "Q2: You are on duty as EMS, what clothing are you permitted to be wearing?",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Civilian clothing", "Police uniform", "EMS uniform", "It doesn't matter as long as you perform your job" ]
+		},
+		{
+			"label": "Q3: While on duty and driving a service vehicle, which rules of the road apply to you and when do they apply? ",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Only stop signs and traffic lights. EMS can travel at any speed at anytime they wish", "All the rules of the road apply at all times in conjunction with emergency response policies", "All the rules of the road apply at all times", "None of the rules of the road apply at any time" ]
+		},
+		{
+			"label": "Q4: You have multiple 911 calls coming from all across the city; How would you respond to the calls?",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Go grab a coffee and some food because you are hungry", "Go to the call that is closest to you", "First come first serve basis", "Judge the calls by severity and respond accordingly" ]
+		},
+		{
+			"label": "Q5: What items are you allowed to use while on duty as EMS?",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Flares, Flare Gun, Fire extinguisher, Flashlight & Knife", "Pistol, Flares, Flare Gun, Fire extinguisher & Flashlight", "Machine Gun, Flare Gun, Fire extinguisher & Flashlight", "Flares, Flare Gun, Fire extinguisher & Flashlight" ]
+		},
+		{
+			"label": "Q6: You respond to a 911 call arriving to an individual that has been injured. You perform all the required treatment at the scene and you deem they should go to the hospital for further treatment but they refuse to go what should you do?",
+			"subLabel": "",
+			"type": "radio",
+			"required": true,
+			"values": [ "Don’t worry about it, just let them go", "Report it to one of the police and tie up police time too", "Ask them to sign a form that states they’re going AMA (Against Medical Advice)", "Force them into the ambulance and take them to the hospital against their will" ]
+		},
+		{
+			"label": "Q7: In your own words, explain three reasons to go 'Code Three'",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Q8: You arrive to a shooting and declare someone dead. What actions would be required from you?",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Q9: You arrive on scene and treat someone for a broken leg. What treatment would you give? Would you take the patient back to the hospital for further treatment? If you would, what road rules would you follow?",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Q10: You respond to a street fight and you find two man knocked out after punches have been exchanged. What treatment would you give? Should the patient(s) be transported to the hospital? Why? ",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "If my application is accepted:",
+			"subLabel": "Check the boxes to state you agree & understand.",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "I will install Teamspeak.", "I am willing ot be interviewed.", "I am willing to go on the required ride alongs.", "I acknowledge that when on active duty as LEO on K33N RP, I am required to be on the Teamspeak. (If I am roleplaying an officer, I will be on Teamspeak).", "I acknowledge that my LEO character is to only be used when ON DUTY and that there is no \"Off Duty\" Law Enforcement Officer. Any time that I am not roleplaying as LEO, I am to use a different Character."]
+		},
+		{
+			"label": "I am at least 17 years of age at the time of this application.",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes" ]
+		},
+		{
+			"label": "I fully understand and speak English.",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes" ]
+		},
+		{
+			"label": "I have read and fully understand the rules & am fully aware that failure to follow could result in a Ban",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "I have read the rules and acknowledge." ]
+		},
+		{
+			"label": "The application can take up to 2 weeks to review - I will not contact any of the staff team regarding the application or it may be denied. By checking you accept and understand this statement.",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "I agree & accept." ]
+		},
+		{
+			"label": "Name & Date",
+			"subLabel": "By stating your name and date, you agree that all information you have provided is accurate and had no external support/assistance in completing this form.",
+			"type": "text",
+			"required": true
+		}
+	]
+}

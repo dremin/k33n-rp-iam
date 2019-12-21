@@ -1,0 +1,36 @@
+{
+  "debug": false,
+  "port": 5336,
+  "database": {
+    "enable": true,
+    "host": "localhost",
+    "port": "3306",
+    "database": "rp_iam",
+    "user": "rp_iam",
+    "password": "password-example"
+  },
+  "steamApiKey": "apikey",
+  "security": {
+    "enable": true,
+    "secret": "something-secure"
+  },
+  "numVotes": 2,
+  "ips": {
+    "apiKey": "apikey",
+    "baseUrl": "https://myipssite.com/forum/api/",
+    "adminGroups": [ 1, 2, 3 ],
+    "dmSender": 1234,
+    "donorRoles": [ 1 ]
+  },
+  "discord": {
+    "apiKey": "apikey",
+    "guildId": "1234",
+    "webhookUrl": "https://discordapp.com/api/webhooks/blah"
+  },
+  "bubbleCad": {
+    "apiKey": "apikey",
+    "baseUrl": "https://mycad.com/api/1.1/",
+    "entityType": "civilian",
+    "entityKey": "name"
+  }
+}

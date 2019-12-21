@@ -1,0 +1,491 @@
+/* Roboto Google Font */
+@import url(https://fonts.googleapis.com/css?family=Roboto:300,400,500,700);
+
+html {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: #000 url('https://k33ngaming.com/forum/uploads/set_resources_2/d0e70b4cbb9ab8afb1bc1065a3f8487a_bg.jpg');
+	color: #fff;
+	font-family: Roboto, sans-serif;
+	font-size: 16px;
+	font-weight: 300;
+	margin: 0;
+	padding: 0;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+a {
+	color: #12c000;
+}
+
+header {
+	text-align: center;
+	background: #000;
+	height: 100px;
+	border-bottom: 2px solid #520074;
+}
+
+#logo {
+	font-size: 28px;
+	color: #12c000;
+	font-weight: 300;
+}
+
+footer {
+	text-align: center;
+	background: #000;
+	height: 35px;
+	padding-top: 20px;
+	border-top: 2px solid #520074;
+	font-size: 14px;
+}
+
+main {
+	flex: 1 0 auto;
+	padding: 30px;
+}
+
+.section-content {
+	padding-bottom: 70px;
+}
+
+h1 {
+	font-weight: 300;
+	font-size: 32px;
+	color: #12c000;
+	border-bottom: 0px solid #520074;
+	margin: 0 0 20px 0;
+	padding: 0 0 5px 0;
+	text-align: center;
+}
+
+table {
+	background: black;
+	border: 0;
+	width: 100%;
+	border-spacing: 0;
+}
+
+thead {
+	color: #12c000;
+	font-weight: 500;
+	text-align: left;
+}
+
+th {
+	padding: 10px;
+	margin: 0;
+	border-bottom: 2px solid #520074;
+}
+
+td {
+	padding: 0px 10px;
+	margin: 0;
+	border-bottom: 1px solid #333;
+	font-size: 14px;
+}
+
+#secMain {
+	display: none;
+	text-align: center;
+}
+
+#secApply {
+	display: none;
+}
+
+.alert {
+	position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    opacity: .8;
+    z-index: 1000;
+    display: none;
+    padding: 50px;
+    border-radius: 5px;
+}
+
+#success-alert {
+    color: #1b3316;
+    background: #aeeb9e;
+}
+
+#error-alert {
+    color: #341616;
+    background: #eb9d9d;
+}
+
+#whitelist-status {
+	padding: 0px 0 0;
+}
+
+/* Forms */
+
+form {
+	display: inline-block;
+}
+
+form.app-form {
+	width: 950px;
+	margin: 0 auto;
+	display: block;
+	border-top: 2px solid #520074;
+	border-bottom: 2px solid #520074;
+}
+
+label {
+	font-weight: 400;
+	margin-right: 10px;
+}
+
+.form-row-input {
+	display: inline-block;
+}
+
+select {
+	background: black;
+	border: 1px solid #520074;
+	color: #eee;
+	font-size: 16px;
+	padding: 10px;
+	margin: 0 5px;
+}
+
+select option {
+	color: #eee;
+}
+
+select option:disabled {
+	color: #666;
+}
+
+input[type=text], input[type=password], textarea {
+	background: black;
+	border: 1px solid #520074;
+	color: #eee;
+	line-height: 20px;
+	font-size: 16px;
+	padding: 10px;
+	margin: 0 5px;
+	width: 535px;
+	max-width: 535px;
+}
+
+input[type=text]:focus, input[type=password]:focus, textarea:focus, select:focus {
+	border: 1px solid #12c000;
+}
+
+textarea {
+	font-family: sans-serif;
+}
+
+input[type=checkbox], input[type=radio] {
+	margin: 0 5px 10px;
+	line-height: 20px;
+}
+
+.form-row, .form-row-textarea, .form-row-multi, .form-row-center, .form-row-first {
+	padding: 20px 10px;
+	background: black;
+	border-bottom: 1px solid #666;
+}
+
+.form-row-first, .form-row-center {
+	border: 0;
+}
+
+.form-row-center {
+	text-align: center;
+}
+
+.app-form label {
+	width: 353px;
+	text-align: right;
+	display: inline-block;
+}
+
+.app-form label span {
+	color: red;
+	display: inline-block;
+	padding-right: 5px;
+	font-size: 10px;
+}
+
+.form-row-textarea label {
+	vertical-align: top;
+	padding-top: 11px;
+}
+
+.form-row-multi label {
+	vertical-align: top;
+	padding-top: 0px;
+}
+
+label.form-row-check {
+	width: auto;
+	text-align: left;
+	font-weight: 300;
+	display: block;
+}
+
+form.app-form span.form-row-description {
+	display: block;
+	margin: 10px 0 0 353px;
+	padding-left: 15px;
+	font-size: 14px;
+	color: #666;
+}
+
+form.app-form .form-row-input span.form-row-description {
+	display: block;
+	margin: 0 0 0 5px;
+	padding-left: 0px;
+}
+
+#form-description {
+	font-size: 14px;
+}
+
+button {
+	background: #520074;
+	border-radius: 5px;
+	padding: 10px 30px;
+	margin: 5px;
+	color: white;
+	font-size: 16px;
+	border: 0;
+	font-weight: 300;
+}
+
+button:hover {
+	color: #520074;
+	background: white;
+}
+
+/* Pending */
+
+#secPending {
+	display: none;
+}
+
+#pending-area {
+	width: 950px;
+	margin: 0 auto 70px;
+	background: #000;
+	border-top: 2px solid #520074;
+	border-bottom: 2px solid #520074;
+	padding: 0px;
+}
+
+span.pending-title {
+	font-size: 20px;
+	font-weight: 400;
+}
+
+#pending-modal-content {
+	text-align: center;
+}
+
+#pending-modal-intro {
+	font-weight: 500;
+}
+
+#pending-modal-outro {
+	padding: 20px 0;
+}
+
+/* Admin */
+
+#secAdmin {
+	display: none;
+	width: 950px;
+	margin: 0 auto;
+}
+
+a.admin-tab {
+	display: inline-block;
+	background: #520074;
+	color: #fff;
+	padding: 13px 20px;
+	margin-bottom: -2px;
+	border-radius: 5px 5px 0px 0px;
+	cursor: pointer;
+	font-size: 14px;
+	line-height: 14px;
+}
+
+a.admin-tab:hover {
+	background: #fff;
+	color: #520074;
+}
+
+a.admin-tab-active {
+	background: #fff;
+	color: #520074;
+}
+
+#admin-content-area {
+	background: #000;
+	border-top: 2px solid #520074;
+	border-bottom: 2px solid #520074;
+	padding: 10px;
+}
+
+.admin-content {
+	display: none;
+}
+
+.admin-content-active {
+	display:block;
+}
+
+#admin-whitelist-content {
+	text-align: center;
+}
+
+.btn-group {
+	margin: 10px 0;
+}
+
+#admin-whitelist-content table {
+	width: 70%;
+	margin: 0 auto;
+}
+
+#admin-whitelist-content th {
+	text-align: center;
+}
+
+#admin-whitelist-content td {
+	padding: 10px;
+}
+
+/* Launcher */
+#launcher-body {
+	background: #000 url('launcherBg.jpg');
+	background-size: cover;
+	background-repeat: no-repeat;
+	text-align: center;
+	text-shadow: 0 0 3px #000;
+}
+
+#launcher-logo {
+	padding-top: 20px;
+}
+
+#user-status h1 {
+	color: #fff;
+	margin: 0;
+}
+
+.user-character {
+	display: inline-block;
+	text-align: left;
+	margin: 20px 10px 10px;
+	padding: 10px 20px 0;
+	border: 1px solid #520074;
+	border-radius: 10px;
+	max-width: 250px;
+	background: rgba(0, 0, 0, 0.4);
+	box-shadow: 0 0 20px #520074;
+}
+
+.user-character h2 {
+	font-size: 22px;
+	margin: 0;
+	padding: 5px 0;
+	color: #12c000;
+}
+
+/* Modal */
+
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background: rgba(0, 0, 0, 0.7);
+}
+
+.modal-frame {
+	background: #000;
+	border: 1px solid #520074;
+	border-radius: 5px;
+	box-shadow: 0px 0px 50px 0px #520074;
+	margin: 100px auto;
+	padding: 20px;
+	width: 972px;
+}
+
+.close {
+	color: #666;
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+	margin-top: -10px;
+}
+
+.close:hover,
+.close:focus {
+	color: #999;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+/* Mobile */
+@media only screen and (max-width: 1010px) {
+
+	form.app-form {
+		width: auto;
+		margin: 0;
+	}
+	
+	.app-form label {
+		width: auto;
+		text-align: left;
+		display: block;
+		margin-bottom: 15px;
+	}
+
+	form.app-form span.form-row-description {
+		margin: 10px 0 0 0;
+		padding-left: 5px;
+		font-size: 14px;
+		color: #666;
+	}
+
+	input[type=text], input[type=password], textarea {
+		display: block;
+		width: 270px;
+		margin-right: 20px;
+		max-width: auto;
+	}
+	
+	#secAdmin {
+		width: auto;
+		margin: 0;
+	}
+	
+	.modal-frame {
+		width: 100%;
+		border: 0;
+		box-shadow: none;
+		margin: 100px 0;
+		padding: 0;
+	}
+	
+	#pending-area {
+		width: auto;
+		margin: 0 0 70px;
+	}
+}

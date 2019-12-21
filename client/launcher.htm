@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>K33N RP Applications</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+		<script type="text/javascript">
+			var token;
+
+			function login() {
+				if (window.location.hash) {
+					// authentication from OAuth successful
+					token = getParameterByName('access_token');
+					// clear hash from address bar
+					history.pushState("", document.title, window.location.pathname + window.location.search);
+				
+					doStuff();
+
+				} else {
+					// need to authorize
+					window.location.replace("https://k33ngaming.com/forum/oauth/authorize?response_type=token&client_id=c31a83e3f11b1a7c6f8ab6fee27aa89b&redirect_uri=https://k33ngaming.com/fivem-iam/launcher.htm&scope=profile");
+				}
+			}
+
+			function doStuff() {
+				xhrExecute("GET", "launcher", {}, function(responseStatus, responseText) {
+					var statusBody = document.getElementById("user-status");
+
+					if (responseStatus == 200) {
+						var stats = JSON.parse(responseText);
+						var statusHtml = "";
+						var charHtml = "";
+						var charListBody = document.getElementById("user-characters");
+
+						if (stats.hasOwnProperty('userName')) {
+							statusHtml += "<h1>" + stats.userName + "</h1>";
+						}
+
+						if (stats.hasOwnProperty('warns')) {
+							statusHtml += "<p><strong>Warnings: </strong>" + stats.warns;
+						}
+
+						if (stats.hasOwnProperty('banned')) {
+							statusHtml += "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<strong>Banned: </strong>" + (stats.banned == 1 ? "Yes" : "No") + "</p>";
+						}
+
+
+						if (stats.hasOwnProperty("characters") && stats.characters.length > 0) {
+							
+							stats.characters.forEach(function(character) {
+								charHtml += "<div class='user-character'><h2>" + character.charName + "</h2><p><strong>Cash: </strong>" + character.money + "</p><p><strong>Bank: </strong>" + character.bank + "</p><p><strong>Job: </strong>" + character.job + "</p><p><strong>Sex: </strong>" + character.sex + "</p><p><strong>Date of Birth: </strong>" + character.dateofbirth + "</p><p><strong>Phone Number: </strong>" + character.phone_number + "</p></div>";
+							});
+							
+						} else {
+							charHtml = "<p>Load K33N RP to create your first character!</p>";
+						}
+
+						statusBody.innerHTML = statusHtml;
+						charListBody.innerHTML = charHtml;
+					} else {
+						statusBody.innerHTML = "<h1 style='margin-top:120px'>Visit K33NRP.com to apply for whitelist today!</h1>";
+					}
+				});
+			}
+	    
+		    function getParameterByName(name) {
+		        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		        var regex = new RegExp("[\\#&]" + name + "=([^&#]*)"),
+		          results = regex.exec(location.hash);
+		        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		    }
+			
+			function xhrExecute(method, endpoint, body, callback) {
+				var xhr = new XMLHttpRequest();
+				var url = 'api/' + endpoint;
+				
+				xhr.onreadystatechange = function() {
+				    if (this.readyState == 4 && this.status != 401) {
+						lastCmd = {};
+						callback(xhr.status, xhr.responseText);
+				    } else if (this.readyState >= 2 && this.status == 401) {
+					    lastCmd = {
+							method: method,
+							endpoint: endpoint,
+							body: body,
+							callback: callback
+							};
+				    }
+				};
+			    
+				xhr.open(method, url);
+				xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				xhr.setRequestHeader("IPSauce", token);
+				
+				xhr.send(JSON.stringify(body));
+			}
+		    
+		    login();
+		</script>
+	</head>
+	<body id="launcher-body">
+		<div id="launcher-logo">
+			<img src="logo.png" alt="K33N RP" width="160" height="160" />
+		</div>
+		<div id="user-status">
+			
+		</div>
+		<div id="user-characters">
+
+		</div>
+	</body>
+</html>

@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>K33N RP Applications</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+		<script type="text/javascript">
+			var lastCmd = {};
+			var token = "";
+			var expires = 0;
+			var submission = {};
+			var elemLoadCache = [];
+			
+			function startup() {
+				login();
+			}
+			
+			/* form functions */
+			function populatePending() {
+				xhrExecute("GET", "applications/pending", {}, (responseStatus, responseText) => {
+					if (responseStatus == 200) {
+						parsePending(JSON.parse(responseText));
+					}
+				});
+			}
+
+			function parsePending(applications) {
+				var secPending = document.getElementById("secPending");
+
+				if (applications.length > 0) {
+					var formListBody = document.getElementById("pending-list");
+					var rowHtml = "";
+					
+					applications.forEach((app) => {
+						rowHtml += "<tr><td><span class='pending-title'>" + app.form + "</span></td><td>Submitted " + app.submitted + "</td><td style='text-align:right'><button value='Submit' type='button' id='pending-list-" + app.id + "' onclick='validateForm(this.id, " + app.id + ");'>Complete</button></td></tr>";
+					});
+					
+					formListBody.innerHTML = rowHtml;
+				
+					if (secPending) {
+						secPending.style.display = "block";
+					}
+				} else {
+					if (secPending) {
+						secPending.style.display = "none";
+					}
+				}
+			}
+			
+			function validateForm(btn, id) {
+				startLoadAnim(btn);
+				xhrExecute("GET", "application/" + id + "/check", {}, (responseStatus, responseText) => {
+					if (responseStatus == 200) {
+						// found the application
+						var contentDiv = document.getElementById("pending-modal-status");
+						var introDiv = document.getElementById("pending-modal-intro");
+						var outroDiv = document.getElementById("pending-modal-outro");
+						var retryBtn = document.getElementById("pending-retry-button");
+						var homeBtn = document.getElementById("pending-home-button");
+						var validations = JSON.parse(responseText);
+						var allValid = true;
+						
+						contentDiv.innerHTML = "";
+						
+						validations.forEach((item) => {
+							var skip = false;
+							var text = "<p>";
+							
+							if (item.result == true) {
+								text += "✅ ";
+							} else {
+								text += "❌ ";
+							}
+							
+							switch (item.type) {
+								case 'cad':
+									text += "Character created in CAD";
+									break;
+								case 'discord':
+									text += "Joined K33N RP Discord";
+									break;
+								case 'steam':
+									text += "Steam hex valid and not banned";
+									break;
+								case 'gaveIpsRole':
+									skip = true;
+									break;
+								case 'gaveDiscordRole':
+									text += "Gave Discord permissions to user";
+									break;
+								case 'whitelist':
+									text += "Added Steam hex to server whitelist";
+									break;
+								default:
+									text += item.type;
+									break;
+							}
+							
+							if (!skip) {
+								text += " (" + item.value + ")</p>";
+								contentDiv.innerHTML += text;
+								
+								if (item.result == false) {
+									allValid = false;
+								}
+							}
+							
+						});
+						
+						if (allValid) {
+							introDiv.innerHTML = "";
+							outroDiv.innerHTML = "Congratulations! Your application is now fully approved. We have sent you a message on K33NGaming.com with details on rules, policies, and next steps.";
+							retryBtn.style.display = "none";
+							homeBtn.style.display = "inline-block";
+						} else {
+							introDiv.innerHTML = "The following items must be completed before your application is fully approved:";
+							outroDiv.innerHTML = "<p>Need help with items above showing an ❌? <a href='https://youtu.be/LNNm_VRYQAo' target='_blank'>Click here for more information</a>.</p><p>Click the button below once you have completed the items above.</p>";
+							homeBtn.style.display = "none";
+							retryBtn.style.display = "inline-block";
+							retryBtn.onclick = function (e) {
+								validateForm("pending-retry-button", id);
+							}
+						}
+						
+						document.getElementById("pending-modal").style.display = "block";
+						populatePending();
+					}
+					stopLoadAnim(btn);
+				});
+			}
+			
+			function closePending() {
+				document.getElementById("pending-modal").style.display = "none";
+			}
+			
+			function populateForms(forms) {
+				// for each form defined above, add an entry to the dropdown list
+				var ddlForm = document.getElementById("ddlForm");
+				var secApply = document.getElementById("secApply");
+				
+				forms.forEach((form) => {
+					var option = document.createElement("option");
+					option.value = form.id;
+					option.text = form.label;
+					ddlForm.add(option);
+				
+					if (forms.length == 1) {
+						// auto select if only one available
+						ddlForm.value = form.id;
+						loadForm();
+					}
+				});
+				
+				if (secApply) {
+					secApply.style.display = "block";
+				}
+			}
+			
+			function loadForm() {
+				var ddlForm = document.getElementById("ddlForm");
+				var formName = ddlForm.options[ddlForm.selectedIndex].value;
+				
+				if (!formName) {
+					document.getElementById("dynamic-content").innerHTML = "";
+					document.getElementById("form-description").style.display = "none";
+					document.getElementById("form-submit").style.display = "none";
+				} else {
+					// load json file for selected form
+					xhrExecute("GET", "form/" + formName, "", (responseStatus, responseText) => {
+						submission = JSON.parse(responseText);
+						
+						buildForm(formName, submission, false);
+					});
+				}
+			}
+			
+			function buildForm(formName, formTemplate, isEdit) {
+				var containerDiv;
+				var rows = 1;
+				
+				if (isEdit) {
+					containerDiv = document.getElementById("admin-editForm-content");
+				} else {
+					containerDiv = document.getElementById("dynamic-content");
+					var formDescription = document.getElementById("form-description");
+					var formSubmit = document.getElementById("form-submit");
+					
+					formDescription.innerHTML = "";
+					formDescription.style.display = "block";
+					formSubmit.style.display = "block";
+					
+					// load description html from server
+					if (formTemplate.hasOwnProperty('description') && formTemplate.description) {
+						xhrExecute("GET", "form/" + formName + "/description", "", (responseStatus, responseText) => {
+							formDescription.innerHTML = responseText;
+						});
+					}
+				}
+				
+				// clear out all form rows that may exist already
+				containerDiv.innerHTML = "";
+				var charValueString = "";
+				
+				if (isEdit) {
+					charValueString = " value=\"" + formTemplate.charName + "\"";
+				}
+				
+				// add character name field
+				containerDiv.innerHTML += "<div class='form-row'><label for='txtFormRowCad'><span>Required</span> Character's Full Name</label><input type='text' id='txtFormRowCad' required" + charValueString + " /><span class='form-row-description'>This is the full first and last name of your character.</span></div>";
+				
+				// add discord field
+				if (formTemplate.hasOwnProperty('requireDiscord') && formTemplate.requireDiscord) {
+					var row = "<div class='form-row'><label for='txtFormRowDiscord'><span>Required</span> Discord Name</label>";
+					var valueString = "";
+					
+					if (isEdit) {
+						valueString = " value=\"" + formTemplate.discordName + "\"";
+					}
+					
+					row += "<input type='text' id='txtFormRowDiscord' required" + valueString + " />";
+					
+					row += "<span class='form-row-description'>This is your full Discord name (example: Name#0000). You MUST be a member of the K33N RP Discord for your application to complete.</span></div>";
+					
+					containerDiv.innerHTML += row;
+				}
+				
+				// add steam field
+				if (formTemplate.hasOwnProperty('requireSteam') && formTemplate.requireSteam) {
+					var row = "<div class='form-row'><label for='txtFormRowSteam'><span>Required</span> Steam ID Hex</label>";
+					var valueString = "";
+					
+					if (isEdit) {
+						valueString = " value=\"" + formTemplate.steamHex + "\"";
+					}
+					
+					row += "<input type='text' id='txtFormRowSteam' required" + valueString + " />";
+					
+					row += "<span class='form-row-description'>You must be logged in to this Steam account to play. Get your Steam ID Hex here: (<a href='http://vacbanned.com/' target='_blank'>http://vacbanned.com/</a>)</span></div>";
+					
+					containerDiv.innerHTML += row;
+				}
+				
+				// loop through each form item in template and construct html
+				formTemplate.form.forEach((formItem) => {
+					var required = false;
+							
+					if (formItem.hasOwnProperty('required') && formItem.required) {
+						required = true;
+					}
+					
+					switch(formItem.type) {
+						case "text":
+							/* <div class="form-row">
+								<label for="txtFormRow1"><span>Required</span> What type of dick can you provide?</label>
+								<input type="text" id="txtFormRow1" placeholder="Cock?" required />
+								<span class="form-row-description">Put them right in my asshole</span>
+							</div> */
+							var row = "<div class='form-row'><label for='txtFormRow" + rows + "'>";
+							var requiredString = "";
+							var valueString = "";
+							
+							if (required) {
+								row += "<span>Required</span> ";
+								requiredString = "required";
+							}
+							
+							if (isEdit && formItem.userValue) {
+								valueString = " value=\"" + formItem.userValue + "\"";
+							}
+							
+							row += formItem.label + "</label>";
+							
+							row += "<input type='text' id='txtFormRow" + rows + "' " + requiredString + valueString + " />";
+							
+							if (formItem.hasOwnProperty('subLabel') && formItem.subLabel != "") {
+								row += "<span class='form-row-description'>" + formItem.subLabel + "</span>";
+							}
+							
+							row += "</div>";
+							
+							containerDiv.innerHTML += row;
+							
+							break;
+						case "textbox":
+							/* <div class="form-row-textarea">
+								<label for="txrFormRow2">What type of dick can you provide?</label>
+								<textarea id="txrFormRow2" placeholder="Cocks?" rows="5"></textarea>
+								<span class="form-row-description">Put them right in my asshole</span>
+							</div> */
+							var row = "<div class='form-row-textarea'><label for='txrFormRow" + rows + "'>";
+							var requiredString = "";
+							var valueString = "";
+							
+							if (required) {
+								row += "<span>Required</span> ";
+								requiredString = "required";
+							}
+							
+							if (isEdit && formItem.userValue) {
+								valueString = formItem.userValue;
+							}
+							
+							row += formItem.label + "</label>";
+							
+							row += "<textarea id='txrFormRow" + rows + "' rows='5' " + requiredString + ">" + valueString + "</textarea>";
+							
+							if (formItem.hasOwnProperty('subLabel') && formItem.subLabel != "") {
+								row += "<span class='form-row-description'>" + formItem.subLabel + "</span>";
+							}
+							
+							row += "</div>";
+							
+							containerDiv.innerHTML += row;
+							
+							break;
+						case "radio":
+							/* <div class="form-row-multi">
+								<label for="rdoFormRow4">What type of dick can you provide?</label>
+								<div class="form-row-input">
+									<label class="form-row-check"><input type="radio" name="rdoFormRow4" value="rdoFormRow4Value1" />Yes</label>
+									<label class="form-row-check"><input type="radio" name="rdoFormRow4" value="rdoFormRow4Value2" />No</label>
+									<span class="form-row-description">Put them right in my asshole</span>
+								</div>
+							</div> */
+							var row = "<div class='form-row-multi'><label for='rdoFormRow" + rows + "'>";
+							var requiredString = "";
+							
+							if (required) {
+								row += "<span>Required</span> ";
+								requiredString = "required";
+							}
+							
+							row += formItem.label + "</label>";
+							
+							row += "<div class='form-row-input'>";
+							
+							if (formItem.hasOwnProperty('values')) {
+								var values = 0;
+								formItem.values.forEach((value) => {
+									var checkedString = "";
+									
+									if (isEdit && formItem.userValue == value) {
+										checkedString = " checked";
+									}
+									
+									row += "<label class='form-row-check'><input type='radio' name='rdoFormRow" + rows + "' value='rdoFormRow" + rows + "Value" + values + "' " + requiredString + checkedString + " />" + value + "</label>";
+									values++;
+								});
+							}
+							
+							if (formItem.hasOwnProperty('subLabel') && formItem.subLabel != "") {
+								row += "<span class='form-row-description'>" + formItem.subLabel + "</span>";
+							}
+							
+							row += "</div></div>";
+							
+							containerDiv.innerHTML += row;
+							
+							break;
+						case "checkbox":
+							/* <div class="form-row-multi">
+								<label for="chkFormRow3">What type of dick can you provide?</label>
+								<div class="form-row-input">
+									<label class="form-row-check"><input type="checkbox" name="chkFormRow3" value="chkFormRow3Value1" />Dick butt</label>
+									<label class="form-row-check"><input type="checkbox" name="chkFormRow3" value="chkFormRow3Value2" />Hard cock</label>
+									<label class="form-row-check"><input type="checkbox" name="chkFormRow3" value="chkFormRow3Value3" />Soft cock</label>
+									<span class="form-row-description">Put them right in my asshole</span>
+								</div>
+							</div> */
+							var row = "<div class='form-row-multi'><label for='chkFormRow" + rows + "'>";
+							var requiredString = "";
+							
+							if (required) {
+								row += "<span>Required</span> ";
+								requiredString = "required";
+							}
+							
+							row += formItem.label + "</label>";
+							
+							row += "<div class='form-row-input'>";
+							
+							if (formItem.hasOwnProperty('values')) {
+								var values = 0;
+								formItem.values.forEach((value) => {
+									var checkedString = "";
+									
+									if (isEdit && formItem.userValue) {
+										formItem.userValue.forEach((userValue) => {
+											if (userValue == value) {
+												checkedString = " checked";
+											}
+										});
+									}
+									
+									row += "<label class='form-row-check'><input type='checkbox' name='chkFormRow" + rows + "' value='chkFormRow" + rows + "Value" + values + "' " + requiredString + checkedString + " />" + value + "</label>";
+									values++;
+								});
+							}
+							
+							if (formItem.hasOwnProperty('subLabel') && formItem.subLabel != "") {
+								row += "<span class='form-row-description'>" + formItem.subLabel + "</span>";
+							}
+							
+							row += "</div></div>";
+							
+							containerDiv.innerHTML += row;
+							
+							break;
+						case "dropdown":
+							/* <div class="form-row">
+								<label for="ddlFormRow5">What type of dick can you provide?</label>
+								<select id="ddlFormRow5">
+									<option value="ddlFormRow5Value1">Long dick</option>
+									<option value="ddlFormRow5Value2">Short dick</option>
+									<option value="ddlFormRow5Value3">Extra long dick</option>
+								</select>
+								<span class="form-row-description">Put them right in my asshole</span>
+							</div> */
+							var row = "<div class='form-row'><label for='ddlFormRow" + rows + "'>";
+							var requiredString = "";
+							
+							if (required) {
+								row += "<span>Required</span> ";
+								requiredString = "required";
+							}
+							
+							row += formItem.label + "</label>";
+							
+							row += "<select id='ddlFormRow" + rows + "' " + requiredString + ">";
+							
+							if (isEdit && formItem.userValue) {
+								row += "<option value='ddlFormRow" + rows + "Value" + values + "' />" + formItem.userValue + "</label>";
+							} else {
+								if (formItem.hasOwnProperty('values')) {
+									var values = 0;
+									formItem.values.forEach((value) => {
+										row += "<option value='ddlFormRow" + rows + "Value" + values + "' />" + value + "</label>";
+										values++;
+									});
+								}
+							}
+							
+							row += "</select>";
+							
+							if (formItem.hasOwnProperty('subLabel') && formItem.subLabel != "") {
+								row += "<span class='form-row-description'>" + formItem.subLabel + "</span>";
+							}
+							
+							row += "</div>";
+							
+							containerDiv.innerHTML += row;
+							
+							break;
+						default:
+					}
+					
+					rows++;
+				});
+			}
+			
+			function submitForm(btn, formSubmission, id, isEdit) {
+				startLoadAnim(btn);
+				var response = {};
+				var rows = 1;
+				var isValid = true;
+				var errorText = "The following errors were found with your submission. Please fix them and try again.\n\n";
+				
+				// add form identifier
+				response.formData = [];
+				response.formId = formSubmission.formId;
+				
+				// add special things to response json
+				var cadElement = document.getElementById('txtFormRowCad');
+				var discordElement = document.getElementById('txtFormRowDiscord');
+				var steamElement = document.getElementById('txtFormRowSteam');
+				
+				if (!!cadElement) {
+					if (cadElement.value != "") {
+						response.name = cadElement.value;
+					} else {
+						isValid = false;
+						errorText += "Character's Full Name is required.\n";
+					}
+				}
+				
+				if (!!discordElement) {
+					if (discordElement.value != "") {
+						response.discordName = discordElement.value;
+					} else {
+						isValid = false;
+						errorText += "Discord Name is required.\n";
+					}
+				}
+				
+				if (!!steamElement) {
+					if (steamElement.value != "") {
+						response.steamHex = steamElement.value;
+					} else {
+						isValid = false;
+						errorText += "Steam ID Hex is required.\n";
+					}
+				}
+				
+				// iterate through submission, build element ID name, get value of that, add to response json
+				formSubmission.form.forEach((formItem) => {
+					var elementId = '';
+					var isGroup = false;
+					var isValueList = false;
+					var isMultiple = false;
+					
+					switch(formItem.type) {
+						case "text":
+							elementId = 'txtFormRow' + rows;
+							
+							break;
+						case "textbox":
+							elementId = 'txrFormRow' + rows;
+							
+							break;
+						case "radio":
+							elementId = 'rdoFormRow' + rows;
+							isGroup = true;
+							isValueList = true;
+							
+							break;
+						case "checkbox":
+							elementId = 'chkFormRow' + rows;
+							isGroup = true;
+							isValueList = true;
+							isMultiple = true;
+							
+							break;
+						case "dropdown":
+							elementId = 'ddlFormRow' + rows;
+							isValueList = true;
+							
+							break;
+						default:
+					}
+					
+					// get value
+					var valueObject;
+					if (!isGroup) {
+						// check for element and value
+						valueObject = document.getElementById(elementId);
+					} else if (!isMultiple) {
+						// query selector
+						valueObject = document.querySelector('input[name="' + elementId + '"]:checked');
+					} else {
+						// multiple selection allowed
+						valueObject = document.querySelectorAll('input[name="' + elementId + '"]:checked');
+					}
+					
+					if (!isMultiple) {
+						if (!!valueObject && valueObject.value) {
+							formItem.userValue = valueObject.value;
+						} else {
+							// if required, prevent submit
+							if (formItem.hasOwnProperty('required') && formItem.required) {
+								isValid = false;
+								errorText += formItem.label + " is required.\n";
+							}
+						}
+						
+						// match to display values
+						if (isValueList && formItem.userValue) {
+							var valueId = parseInt(formItem.userValue.replace(elementId + 'Value', ''));
+							
+							formItem.userValue = formItem.values[valueId];
+						}
+					} else {
+						if (valueObject.length == 0 && formItem.hasOwnProperty('required') && formItem.required) {
+							isValid = false;
+							errorText += formItem.label + " is required.\n";
+						}
+						
+						formItem.userValue = [];
+						for (var i = 0; i < valueObject.length; i++) {
+							// match to display values
+							var valueId = parseInt(valueObject[i].value.replace(elementId + 'Value', ''));
+							
+							formItem.userValue.push(formItem.values[valueId]);
+						}
+					}
+					
+					// add form row data to response
+					response.formData.push(formItem);
+					
+					rows++;
+				});
+				
+				if (isValid && isEdit) {
+					xhrExecute("POST", "application/" + id + "/update", response, (responseStatus, responseText) => {
+						stopLoadAnim(btn);
+						closeForm();
+						showResult(responseStatus, responseText);
+					});
+				} else if (isValid) {
+					xhrExecute("POST", "application/new", response, (responseStatus, responseText) => {
+						if (responseStatus == 200) {
+							window.location.replace("nextSteps.htm");
+						} else if (responseStatus == 429) {
+							alert("You have submitted this application form already. If your previous submission was denied, you may submit another application once two weeks have passed since your application denial.");
+						}
+						stopLoadAnim(btn);
+					});
+				} else {
+					stopLoadAnim(btn);
+					alert(errorText);
+				}
+			}
+			
+			function loadFormList() {
+				xhrExecute("GET", "applications", {}, (responseStatus, responseText) => {
+					if (responseStatus == 200) {
+						var applications = JSON.parse(responseText);
+						var formListNewBody = document.getElementById("form-list-new");
+						var formListPendingBody = document.getElementById("form-list-pending");
+						var formListApprovedBody = document.getElementById("form-list-approved");
+						var formListDeniedBody = document.getElementById("form-list-denied");
+						formListNewBody.innerHTML = "";
+						formListPendingBody.innerHTML = "";
+						formListApprovedBody.innerHTML = "";
+						formListDeniedBody.innerHTML = "";
+						
+						applications.forEach((app) => {
+							/* <tr>
+								<td>1</td>
+								<td>scj312</td>
+								<td>Today</td>
+								<td>New</td>
+							</tr> */
+							var rowHtml = "";
+							
+							if (app.isDonor == 1) {
+								rowHtml += "<tr style='color:#12c000'>";
+							} else {
+								rowHtml += "<tr>";
+							}
+							
+							rowHtml += "<td>" + app.id + "</td><td>" + app.userName + "</td><td>" + app.form + "</td><td>" + app.submitted + "</td><td style='text-align:right'><button value='Submit' type='button' id='form-list-" + app.id + "' onclick='viewForm(this.id, " + app.id + ", \"" + app.form + "\");'>View</button></td></tr>";
+							
+							switch (app.status) {
+								case 0:
+									formListNewBody.innerHTML += rowHtml;
+									break;
+								case 1:
+									formListPendingBody.innerHTML += rowHtml;
+									break;
+								case 2:
+									formListApprovedBody.innerHTML += rowHtml;
+									break;
+								case 3:
+									formListDeniedBody.innerHTML += rowHtml;
+									break;
+								default:
+									break;
+							}
+						});
+					}
+				});
+			}
+			
+			/* whitelist functions */
+			function addWhitelist() {
+				var hex = document.getElementById("txtWhitelist").value;
+				
+				if (hex) {
+					xhrExecute("POST", "access", { steamid: "steam:" + hex }, (responseStatus, responseText) => {
+						showResult(responseStatus, responseText);
+					});
+				}
+			}
+			
+			function givePriority() {
+				xhrExecute("POST", "access/steam:" + document.getElementById("txtWhitelist").value + "/priority", { priority: 1 }, (responseStatus, responseText) => {
+					showResult(responseStatus, responseText);
+					whitelistCheck();
+				});
+			}
+			
+			function warn() {
+				var reason = prompt("Please enter the reason for warning this player. This will be logged.");
+				xhrExecute("POST", "access/steam:" + document.getElementById("txtWhitelist").value + "/warn", { reason: reason }, (responseStatus, responseText) => {
+					showResult(responseStatus, responseText);
+					whitelistCheck();
+				});
+			}
+			
+			function ban() {
+				var reason = prompt("Please enter the reason for banning this player. This will be logged.");
+				xhrExecute("POST", "access/steam:" + document.getElementById("txtWhitelist").value + "/ban", { reason: reason }, (responseStatus, responseText) => {
+					showResult(responseStatus, responseText);
+					whitelistCheck();
+				});
+			}
+			
+			function reduceWarn() {
+				var reason = prompt("Please enter the reason for reducing the warnings on this player. This will be logged.");
+				xhrExecute("POST", "access/steam:" + document.getElementById("txtWhitelist").value + "/warn", { reduce: true, reason: reason }, (responseStatus, responseText) => {
+					showResult(responseStatus, responseText);
+					whitelistCheck();
+				});
+			}
+			
+			function clearBan() {
+				var reason = prompt("Please enter the reason for unbanning this player. This will be logged.");
+				xhrExecute("POST", "access/steam:" + document.getElementById("txtWhitelist").value + "/ban", { clear: true, reason: reason }, (responseStatus, responseText) => {
+					showResult(responseStatus, responseText);
+					whitelistCheck();
+				});
+			}
+			
+			/* admin tabs */
+			function setAdminTab(page) {
+				var tab = document.getElementById(page + "-content");
+				clearAdminTabs();
+				clearAdminContent();
+				tab.classList.add('admin-content-active');
+				document.getElementById(page).classList.add('admin-tab-active');
+			}
+			
+			function clearAdminTabs() {
+				var tabs = document.getElementsByClassName('admin-tab');
+				
+				for (var i = 0; i < tabs.length; i++) {
+					tabs[i].classList.remove('admin-tab-active');
+				}
+			}
+			
+			function clearAdminContent() {
+				var frames = document.getElementsByClassName('admin-content');
+				
+				for (var i = 0; i < frames.length; i++) {
+					frames[i].classList.remove('admin-content-active');
+				}
+			}
+			
+			function showAdmin() {
+				setAdminTab("admin-whitelist");
+				document.getElementById("secAdmin").style.display = "block";
+				
+				// add whitelist checker
+				loadWhitelistCheck();
+				
+				// load tab content
+				loadFormList();
+			}
+			
+			function loadWhitelistCheck() {
+				var txtWhitelist = document.getElementById("txtWhitelist");
+				
+				var timeout = null;
+				
+				txtWhitelist.onkeyup = function (e) {
+					clearTimeout(timeout);
+					
+					timeout = setTimeout(function() {
+						whitelistCheck();
+					}, 200);
+				}
+			}
+			
+			function whitelistCheck() {
+				var hex = document.getElementById("txtWhitelist").value;
+				var whitelistStatus = document.getElementById("whitelist-status");
+				
+				if (!hex) {
+					whitelistStatus.innerHTML = "";
+				} else {
+					xhrExecute("GET", "access/steam:" + hex + "/check", {}, (responseStatus, responseText) => {
+						var html = "";
+						if (responseStatus == 200) {
+							var status = JSON.parse(responseText);
+							
+							if (status.hasOwnProperty('priority') && status.hasOwnProperty('warns') && status.hasOwnProperty('banned')) {
+								if (status.hasOwnProperty('charNames') && status.hasOwnProperty('steamName')) {
+									html += "<p><strong>Steam Name:</strong> " + status.steamName + "</p>";
+									html += "<p><strong>Character(s):</strong> " + status.charNames + "</p>";
+								}
+								var priority = "No";
+								if (status.priority == 1) priority = "Yes";
+								
+								html += "<p><strong>Priority:</strong> " + priority + "</p>";
+								html += "<p><strong>Warns:</strong> " + status.warns + "</p>";
+								
+								var banned = "No";
+								if (status.banned == 1) banned = "Yes";
+								
+								html += "<p><strong>Banned:</strong> " + banned + "</p>";
+
+								if (status.hasOwnProperty('logs') && status.logs.length > 0) {
+									html += "<table><thead><tr><th>Date</th><th>Type</th><th width='50%'>Reason</th></tr></thead><tbody>";
+									
+									status.logs.forEach(log => {
+										html += "<tr><td>" + log.date + "</td><td>" + logTypeString(log.type) + "</td><td>" + log.reason + "</td></tr>";
+									});
+									
+									html += "</tbody></table>";
+								}
+
+							} else {
+								html = "<p>Error loading user from whitelist</p>";
+							}
+						} else {
+							html = "<p><strong>Not whitelisted</strong></p>";
+						}
+						
+						whitelistStatus.innerHTML = html;
+					});
+				}
+			}
+			
+			function viewForm(btn, id, formLabel) {
+				startLoadAnim(btn);
+				xhrExecute("GET", "application/" + id, {}, (responseStatus, responseText) => {
+					if (responseStatus == 200) {
+						// found the application
+						var app = JSON.parse(responseText);
+						
+						var formTemplate = {};
+						formTemplate.charName = app.charName;
+						
+						if (app.discordName && app.discordName != "") {
+							formTemplate.requireDiscord = true;
+							formTemplate.discordName = app.discordName;
+						}
+						
+						if (app.steamHex && app.steamHex != "") {
+							formTemplate.requireSteam = true;
+							formTemplate.steamHex = app.steamHex;
+						}
+						
+						formTemplate.form = JSON.parse(app.data);
+						formTemplate.formId = app.form;
+						
+						document.getElementById("admin-editForm-title").innerHTML = formLabel + "&nbsp;-&nbsp;" + app.userName;
+						
+						buildForm(app.form, formTemplate, true);
+						
+						document.getElementById("admin-editForm").style.display = "block";
+						
+						var btnUpvote = document.getElementById("upvote-button");
+						var btnDownvote = document.getElementById("downvote-button");
+						var btnSave = document.getElementById("admin-edit-button");
+						btnSave.onclick = function (e) {
+							submitForm("admin-edit-button", formTemplate, id, true);
+						}
+						
+						if (app.status < 1) {
+							// set functions for upvote/downvote buttons
+							btnUpvote.style.display = "inline-block";
+							btnDownvote.style.display = "inline-block";
+							btnUpvote.onclick = function (e) {
+								upvote(id);
+							}
+							btnDownvote.onclick = function (e) {
+								downvote(id, app.votes);
+							}
+						} else {
+							btnUpvote.style.display = "none";
+							btnDownvote.style.display = "none";
+						}
+					}
+					stopLoadAnim(btn);
+				});
+			}
+			
+			function upvote(id) {
+				var btn = "upvote-button";
+				startLoadAnim(btn);
+				xhrExecute("GET", "application/" + id + "/upvote", { }, (responseStatus, responseText) => {
+					closeForm();
+					showResult(responseStatus, responseText);
+					stopLoadAnim(btn);
+					
+					// check status again
+					loadFormList();
+				});
+			}
+			
+			function downvote(id, votes) {
+				var reason = "";
+				if (votes < 0) {
+					// this will deny the application, so pop a reason prompt
+					reason = prompt("Please enter the reason for declining this application. This will be sent to the applicant.");
+				}
+				
+				var btn = "downvote-button";
+				startLoadAnim(btn);
+				xhrExecute("POST", "application/" + id + "/downvote", { deniedReason: reason }, (responseStatus, responseText) => {
+					closeForm();
+					showResult(responseStatus, responseText);
+					stopLoadAnim(btn);
+					
+					// check status again
+					loadFormList();
+				});
+			}
+			
+			function closeForm() {
+				document.getElementById("admin-editForm").style.display = "none";
+				document.getElementById("admin-editForm-content").innerHTML = "";
+			}
+
+			function logTypeString(type) {
+				switch (type) {
+					case 0:
+						return "Warn";
+						break;
+					case 1:
+						return "Ban";
+						break;
+					case 2:
+						return "Unwarn";
+						break;
+					case 3:
+						return "Unban";
+						break;
+					default:
+						return type;
+				}
+			}
+			
+			function statusString(status) {
+				switch (status) {
+					case 0:
+						return "New";
+						break;
+					case 1:
+						return "Pending";
+						break;
+					case 2:
+						return "Approved";
+						break;
+					case 3:
+						return "Denied";
+						break;
+					default:
+						return status;
+				}
+			}
+			
+			/* helper functions */
+			function startLoadAnim(id) {
+				var elem = document.getElementById(id);
+				var hasCache = false;
+				
+				for (var cacheElem in elemLoadCache) {
+					if (elemLoadCache[cacheElem].id == id) {
+						hasCache = true;
+						break;
+					}
+				}
+				
+				if (!hasCache) {
+					elemLoadCache.push({ id: id, html: elem.innerHTML });
+				}
+				
+				elem.innerHTML = "<i class='fas fa-spinner fa-spin'></i>";
+				elem.disabled = true;
+			}
+			
+			function stopLoadAnim(id) {
+				var elem = document.getElementById(id);
+				
+				for (var cacheElem in elemLoadCache) {
+					if (elemLoadCache[cacheElem].id == id) {
+						elem.innerHTML = elemLoadCache[cacheElem].html;
+						elem.disabled = false;
+						break;
+					}
+				}
+			}
+			
+			function showResult(responseStatus, responseText) {
+				if (responseStatus == 200) {
+					// show success message
+					document.getElementById("success-alert").style.display = "block";
+					
+					setTimeout(() => {
+						document.getElementById("success-alert").style.display = "none";
+					}, 2000);
+				} else {
+					// show response text
+					document.getElementById("error-alert").style.display = "block";
+					document.getElementById("error-text").innerHTML = responseText;
+					
+					setTimeout(() => {
+						document.getElementById("error-alert").style.display = "none";
+					}, 2000);
+				}
+			}
+			
+			function login() {
+				if (window.location.hash) {
+					// authentication from OAuth successful
+					token = getParameterByName('access_token');
+					expires = getParameterByName('expires_in');
+					// clear hash from address bar
+					history.pushState("", document.title, window.location.pathname + window.location.search);
+
+					// make a request to IPS to make sure the token is good before sending to backend
+					ipsExecute("GET", "core/me", {}, (responseStatus, responseText) => {
+						console.log(responseStatus);
+						if (responseStatus == 200) {
+							// token is good! continue.
+
+							// combined request for admin check, forms list, and pending list
+							xhrExecute("GET", "applications/load", {}, (responseStatus, responseText) => {
+								if (responseStatus == 200) {
+									var appData = JSON.parse(responseText);
+
+									// has admin?
+									if (appData.hasAdmin == true) showAdmin();
+
+									// populate form data
+									parsePending(appData.pendingApps);
+									populateForms(appData.forms);
+								}
+							});
+						} else if (responseStatus != 0) {
+							// token no bueno.
+							window.location.replace("https://k33ngaming.com/forum/oauth/authorize?response_type=token&client_id=c31a83e3f11b1a7c6f8ab6fee27aa89b&redirect_uri=https://k33ngaming.com/fivem-iam/index.htm&scope=profile");
+						}
+					});
+				} else {
+					// need to authorize
+					window.location.replace("https://k33ngaming.com/forum/oauth/authorize?response_type=token&client_id=c31a83e3f11b1a7c6f8ab6fee27aa89b&redirect_uri=https://k33ngaming.com/fivem-iam/index.htm&scope=profile");
+				}
+			}
+	    
+		    function getParameterByName(name) {
+		        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		        var regex = new RegExp("[\\#&]" + name + "=([^&#]*)"),
+		          results = regex.exec(location.hash);
+		        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		    }
+			
+			function ipsExecute(method, endpoint, body, callback) {
+				var xhr = new XMLHttpRequest();
+				var url = 'https://k33ngaming.com/forum/api/' + endpoint;
+				
+				xhr.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						callback(xhr.status, xhr.responseText);
+					}
+				};
+			    
+				xhr.open(method, url);
+				xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				xhr.setRequestHeader("Authorization", "Bearer " + token);
+				
+				xhr.send(JSON.stringify(body));
+			}
+			
+			function xhrExecute(method, endpoint, body, callback) {
+				var xhr = new XMLHttpRequest();
+				var url = 'api/' + endpoint;
+				
+				xhr.onreadystatechange = function() {
+				    if (this.readyState == 4 && this.status != 401) {
+						lastCmd = {};
+						callback(xhr.status, xhr.responseText);
+				    } else if (this.readyState >= 2 && this.status == 401) {
+					    lastCmd = {
+							method: method,
+							endpoint: endpoint,
+							body: body,
+							callback: callback
+							};
+				    }
+				};
+			    
+				xhr.open(method, url);
+				xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				xhr.setRequestHeader("IPSauce", token);
+				xhr.setRequestHeader("IPSauceExp", expires);
+				
+				xhr.send(JSON.stringify(body));
+			}
+			
+			document.addEventListener('DOMContentLoaded', function() {
+			    startup();
+			}, false);
+			
+			window.onclick = function(event) {
+				if (event.target == document.getElementById("admin-editForm")) {
+					closeForm();
+				}
+				if (event.target == document.getElementById("pending-modal")) {
+					closePending();
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<header>
+			<img src="logo.png" alt="K33N RP" width="100" height="100" />
+		</header>
+		<main>
+			<section id="secAdmin">
+				<h1>Administration</h1>
+				<div class="section-content">
+					<div id="admin-nav">
+						<a class="admin-tab" id="admin-whitelist" onclick="setAdminTab('admin-whitelist');">
+							Whitelist Control
+						</a>
+						<a class="admin-tab" id="admin-formList-new" onclick="setAdminTab('admin-formList-new');">
+							New
+						</a>
+						<a class="admin-tab" id="admin-formList-pending" onclick="setAdminTab('admin-formList-pending');">
+							Pending
+						</a>
+						<a class="admin-tab" id="admin-formList-approved" onclick="setAdminTab('admin-formList-approved');">
+							Approved
+						</a>
+						<a class="admin-tab" id="admin-formList-denied" onclick="setAdminTab('admin-formList-denied');">
+							Denied
+						</a>
+					</div>
+					<div id="admin-content-area">
+						<div id="admin-whitelist-content" class="admin-content admin-content-active">
+							<label for="">Steam hex:</label> <input type="text" id="txtWhitelist" placeholder="1234567890" style="width:180px;" />
+							<div id="whitelist-status"></div>
+							<div class="btn-group">
+								<button value="Add to Whitelist" onclick="addWhitelist();">Add to Whitelist</button><button value="Give Priority" onclick="givePriority();">Give Priority</button>
+							</div>
+							<div class="btn-group">
+								<button value="Warn" onclick="warn();">Warn</button><button value="Ban" onclick="ban();">Ban</button>
+							</div>
+							<div class="btn-group">
+								<button value="Reduce Warn" onclick="reduceWarn();">Reduce Warn</button><button value="Clear Ban" onclick="clearBan();">Clear Ban</button>
+							</div>
+						</div>
+						<div id="admin-formList-new-content" class="admin-content">
+							<table>
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>Username</th>
+										<th>Form</th>
+										<th>Submitted</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody id="form-list-new">
+								</tbody>
+							</table>
+						</div>
+						<div id="admin-formList-pending-content" class="admin-content">
+							<table>
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>Username</th>
+										<th>Form</th>
+										<th>Submitted</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody id="form-list-pending">
+								</tbody>
+							</table>
+						</div>
+						<div id="admin-formList-approved-content" class="admin-content">
+							<table>
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>Username</th>
+										<th>Form</th>
+										<th>Submitted</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody id="form-list-approved">
+								</tbody>
+							</table>
+						</div>
+						<div id="admin-formList-denied-content" class="admin-content">
+							<table>
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>Username</th>
+										<th>Form</th>
+										<th>Submitted</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody id="form-list-denied">
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div id="admin-editForm" class="modal">
+						<div class="modal-frame">
+							<span class="close" onclick="closeForm();">&times;</span>
+							<h1 id="admin-editForm-title"></h1>
+							<form class="app-form">
+								<div id="admin-editForm-content">
+								</div>
+								<div class="form-row-center">
+									<div class="btn-group" id="admin-editForm-topButtons">
+										<button value="Save" id="admin-edit-button" type="button">Save Changes</button>
+									</div>
+									<div class="btn-group" id="admin-editForm-buttons">
+										<button value="Upvote" id="upvote-button" type="button"><i class="fas fa-thumbs-up"></i> Upvote</button><button value="Downvote" id="downvote-button" type="button"><i class="fas fa-thumbs-down"></i> Downvote</button>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</section>
+			<div id="pending-modal" class="modal">
+				<div class="modal-frame">
+					<span class="close" onclick="closePending();">&times;</span>
+					<h1 id="pending-modal-title">Application Status</h1>
+					<div id="pending-modal-content">
+						<div id="pending-modal-intro"></div>
+						<div id="pending-modal-status"></div>
+						<div id="pending-modal-outro"></div>
+						<button value="Retry" id="pending-retry-button" type="button">Check Again</button>
+						<a href="https://k33ngaming.com" id="pending-home-button"><button value="Submit" type="button">K33N Gaming Community Home</button></a>
+					</div>
+				</div>
+			</div>
+			<section id="secPending">
+				<h1>Applications Awaiting Action</h1>
+				<div id="pending-area">
+					<table>
+						<tbody id="pending-list">
+						</tbody>
+					</table>
+				</div>
+			</section>
+			<section id="secApply">
+				<h1>Submit a K33N RP Application</h1>
+				<form class="app-form">
+					<div class="form-row-first">
+						<label for="ddlFormRow0">Please select an application form:</label>
+						<select id="ddlForm" onchange="loadForm();">
+							<option></option>
+						</select>
+					</div>
+					<div class="form-row" id="form-description" style="display:none">
+					</div>
+					<div id="dynamic-content">
+					</div>
+					<div class="form-row-center" id="form-submit" style="display:none">
+						<button value="Submit" type="button" id="form-submit-button" onclick="submitForm(this.id, submission, 0, false);"><i class="fas fa-check"></i> Submit Application</button>
+					</div>
+				</form>
+			</section>
+			<div id="success-alert" class="alert">
+				<strong>Success:</strong> The operation was successful.
+			</div>
+			<div id="error-alert" class="alert">
+				<strong>Error:</strong> <span id="error-text"></span>
+			</div>
+		</main>
+		<footer>
+			&copy; 2019 K33N Gaming Community
+		</footer>
+	</body>
+</html>
