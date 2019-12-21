@@ -26,7 +26,7 @@ This app is currently used to automate identity and access management for the K3
 1. Import `rp_iam.sql` into MySQL server
 2. Create OAuth client in IPS
 3. Generate API keys for Discord, Steam, and Bubble
-4. Copy `config_example.json` to `~/k33n-rp-iam.json` and set values appropriately
+4. Copy `config-example.json` to `~/k33n-rp-iam.json` and set values appropriately
 5. Define email templates in the `emails` directory
 6. Define forms in the `forms` database table and templates in the `forms` directory
 7. Add `K33N_Gatekeeper` resource to FiveM
