@@ -1,0 +1,36 @@
+{
+	"form": [
+		{
+			"label": "Text example",
+			"subLabel": "This one is not required",
+			"type": "text",
+			"required": false
+		},
+		{
+			"label": "Another Text",
+			"subLabel": "But this one is required!",
+			"type": "text",
+			"required": true
+		},
+		{
+			"label": "Radio example",
+			"subLabel": "Select one.",
+			"type": "radio",
+			"required": true,
+			"values": [ "One", "Two", "Three", "Other" ]
+		},
+		{
+			"label": "Textbox example",
+			"subLabel": "",
+			"type": "textbox",
+			"required": true
+		},
+		{
+			"label": "Checkbox example. <a href='https://google.com' target='_blank'>Links work too!</a>",
+			"subLabel": "",
+			"type": "checkbox",
+			"required": true,
+			"values": [ "Yes" ]
+		}
+	]
+}

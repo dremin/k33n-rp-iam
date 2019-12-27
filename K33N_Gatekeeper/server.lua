@@ -1,10 +1,11 @@
-local welcomeMsg = "Welcome to K33N! Checking whitelist status..."
+local welcomeMsg = "Welcome! Checking whitelist status..."
 local steamMsg = "Please open Steam and try again."
-local noEntryMsg = "You are not able to join this server. Register and apply for our whitelist today: k33ngaming.com/apply"
+local noEntryMsg = "You are not able to join this server. Register and apply for our whitelist today!"
+local baseUrl = "https://mysite-example.com/fivem-iam"
 
 function iamRequest(method, endpoint, jsonData)
 	local data = nil
-	PerformHttpRequest("https://k33ngaming.com/fivem-iam/api/" .. endpoint, function(errorCode, resultData, resultHeaders)
+	PerformHttpRequest(baseUrl .. "/api/" .. endpoint, function(errorCode, resultData, resultHeaders)
 		data = {
 			data = resultData,
 			code = errorCode,

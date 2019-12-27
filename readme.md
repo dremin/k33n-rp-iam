@@ -27,12 +27,13 @@ This app is currently used to automate identity and access management for the K3
 2. Create OAuth client in IPS
 3. Generate API keys for Discord, Steam, and Bubble
 4. Copy `config-example.json` to `~/k33n-rp-iam.json` and set values appropriately
-5. Define email templates in the `emails` directory
-6. Define forms in the `forms` database table and templates in the `forms` directory
-7. Add `K33N_Gatekeeper` resource to FiveM
+5. Create an `emails` directory to define email templates, using the examples in the `emails-example` directory.
+6. Define forms in the `forms` database table
+7. Create a `forms` directory to define form templates, using the examples in the `forms-example` directory.
 8. Front-end server with an SSL reverse proxy
-9. Add the service as a `systemd` unit for auto-start on boot
-10. Maybe more; I haven't tested these instructions!
+9. Add `K33N_Gatekeeper` resource to FiveM and modify `baseUrl` to point to the publicly accessible URL from the previous step
+10. Add the service as a `systemd` unit for auto-start on boot
+11. Maybe more; I haven't tested these instructions!
 
 ## To Do
 - Server-sided validation of required form fields being present

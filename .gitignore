@@ -1,3 +1,7 @@
+# Environment-specific files
+emails/
+forms/
+
 # Logs
 logs
 *.log
