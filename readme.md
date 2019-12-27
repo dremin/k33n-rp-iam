@@ -33,6 +33,7 @@ This app is currently used to automate identity and access management for the K3
 8. Front-end server with an SSL reverse proxy
 9. Add `K33N_Gatekeeper` resource to FiveM and modify `baseUrl` to point to the publicly accessible URL from the previous step
 10. Add the service as a `systemd` unit for auto-start on boot
+11. Visit `<baseUrl>/index.htm` in a web browser to see the fruits of your labor.
 11. Maybe more; I haven't tested these instructions!
 
 ## To Do
