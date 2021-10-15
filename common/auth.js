@@ -1,159 +1,114 @@
 'use strict';
 const config = require('./config').config;
-const url = config.ips.baseUrl;
-const apiKey = config.ips.apiKey;
-const request = require('./jsonRequest');
+const discord = require('./discord');
 
-// === auth cache - poor man's object schema ===
+// === user cache - poor man's object schema ===
 // {
-//	token: string
-//	timestamp: datetime
-//	expires: int
-//	status: int
-//	user: IPSUser
+//	token: string,
+//	timestamp: datetime,
+//	expires: int,
+//	discordToken: string,
+//  id: snowflake,
+//  name: string,
+//  roles: [string]
 // }
-// yes, jsonRequest has a cache, but it keys off URL (which is the same per user for this request), rather than headers
-// it might make sense to add a custom key option for jsonRequest cache, being the token, but I already wrote this, so
-var authCache = [];
 
-exports.ipsAuthCheck = (req, res) => {
+var userCache = [];
+
+exports.serverAuth = (header) => {
+	let authHeader = header.split(' ')[1]
+
+	if (!authHeader) {
+		return false
+	}
+
+	let buffer = Buffer.from(authHeader, 'base64')
+	let serverKey = buffer.toString('ascii')
+
+	if (config.servers[serverKey]) {
+		return config.servers[serverKey]
+	}
+
+	return false
+}
+
+exports.discordAuth = (code) => {
 	return new Promise((resolve, reject) => {
-		var token = req.get('IPSauce');
-		var expires = req.get('IPSauceExp');
-
-		if (token == null || token == '') {
-			if (config.debug) console.log("Missing secret");
-		} else {
-			var cacheItem;
-			var now = Date.now();
-
-			for (var i = authCache.length-1; i >= 0; i--) {
-				// compare the inserted date plus expiration time to see if still valid item
-				var newDate = new Date(authCache[i].timestamp + (authCache[i].expires * 1000));
-				
-				if (now >= newDate) {
-					if (config.debug) console.log("Removing expired auth token");
-					authCache.splice(i, 1);
-				} else if (authCache[i].token == token) {
-					// this is our guy
-					cacheItem = authCache[i];
-					break;
-				}
-			}
-
-			if (cacheItem != null) {
-				// we have a cached result that is not expired
-				if (config.debug) console.log("Using cached auth data");
-				if (cacheItem.status == 200) {
-					resolve(cacheItem.user);
-				} else {
-					res.status(401).json({ message: 'Auth error' });
-					reject();
-				}
-			} else {
-				// we haven't seen this one before; get user info and save
-				cacheItem = {
-					token: token,
-					expires: expires,
-					timestamp: now
-				};
-
-				request.get(url + 'core/me', { 'Authorization': 'Bearer ' + token }).then((data) => {
-					// authorized
-					cacheItem.user = data;
-					cacheItem.status = 200;
-					authCache.push(cacheItem);
-					if (config.debug) console.log("Adding successful authorization to cache");
-
-					resolve(data);
-				},
-				(reason) => {
-					// not authorized
-					res.status(401).json({ message: 'Auth error' });
-					if (config.debug) console.log("Incorrect or missing secret");
-					if (config.debug) console.log("Adding failed authorization to cache");
-					cacheItem.status = 401;
-					authCache.push(cacheItem);
-
-					reject();
-				});
-			}
+		if (!code) {
+			reject("No auth code")
+			return
 		}
-	});
+
+		discord.getDiscordToken(code)
+		.then((authData) => {
+			discord.getDiscordUser(authData.access_token)
+			.then((userData) => {
+				// see if the user is in the guild. if not, add them.
+				discord.getDiscordRoles(userData.id)
+				.then((rolesData) => {
+					// already in guild
+					let user = discord.createUser(authData, userData, rolesData.roles)
+					resolve(user)
+				})
+				.catch((error) => {
+					// need to add to guild
+					discord.addUserToGuild(userData.id, authData.access_token)
+					.then((addData) => {
+						discord.getDiscordRoles(userData.id)
+						.then((rolesData) => {
+							let user = discord.createUser(authData, userData, rolesData.roles)
+							resolve(user)
+						})
+						.catch((error) => {
+							reject(error)
+						})
+					})
+					.catch((error) => {
+						reject(error)
+					})
+				})
+			})
+			.catch((error) => {
+				reject(error)
+			})
+		})
+		.catch((error) => {
+			reject(error)
+		})
+	})
 }
 
-exports.checkGroups = (req, res, user, groups, sendRes) => {
+exports.validateToken = (token) => {
 	return new Promise((resolve, reject) => {
-		request.get(url + 'core/members/' + user + '?key=' + apiKey, {}, 900000).then((data) => {
-			var foundGroups = [];
-			var matchFound = false;
-			
-			// get primary group
-			foundGroups.push(data.primaryGroup.id);
-			// get all secondary groups
-			data.secondaryGroups.forEach((secGroup) => {
-				foundGroups.push(secGroup.id);
-			});
+		if (!token) {
+			reject("No token")
+			return
+		}
 
-			// check each given group if it is in the list of pri/sec groups
-			groups.forEach((groupId) => {
-				if (foundGroups.indexOf(groupId) >= 0) {
-					matchFound = true;
-				}
-			});
-			
-			if (matchFound) {
-				resolve();
-			} else {
-				// not authorized
-				if (sendRes == true) {
-					res.status(401).json({ message: 'Auth error' });
-					if (config.debug) console.log("Missing group");
-				}
-				reject();
+		var cacheItem = discord.getFromCache(token)
+
+		if (cacheItem) {
+			resolve(cacheItem)
+		} else {
+			reject("Invalid token")
+		}
+	})
+}
+
+exports.checkRoles = (userRoles, desiredRoles) => {
+	return new Promise((resolve, reject) => {
+		if (!userRoles || !desiredRoles) {
+			reject("Must provide both the current and desired roles")
+			return
+		}
+
+		desiredRoles.forEach((roleId) => {
+			if (userRoles.indexOf(roleId) >= 0) {
+				resolve(true)
+				return;
 			}
-		},
-		(reason) => {
-			// not authorized
-			if (sendRes == true) {
-				res.status(401).json({ message: 'Auth error' });
-				if (config.debug) console.log("Missing group");
-			}
-			reject();
 		});
-	});
-}
 
-exports.getGroups = (req, res, user) => {
-	return new Promise((resolve, reject) => {
-		request.get(url + 'core/members/' + user + '?key=' + apiKey, {}, 900000).then((data) => {
-			var foundGroups = [];
-			
-			// get primary group
-			foundGroups.push(data.primaryGroup.id);
-			// get all secondary groups
-			data.secondaryGroups.forEach((secGroup) => {
-				foundGroups.push(secGroup.id);
-			});
-			
-			resolve(foundGroups);
-		},
-		(reason) => {
-			// not authorized
-			res.status(401).json({ message: 'Auth error' });
-			if (config.debug) console.log("Incorrect or missing secret");
-			reject();
-		});
-	});
-}
-
-exports.sendPm = (sender, to, title, body) => {
-	return new Promise((resolve, reject) => {
-		request.post(url + 'core/messages/?key=' + apiKey + '&' + encodeURIComponent('from=' + sender + '&to[0]=' + to + '&title=' + title + '&body=' + body), '').then((data) => {
-			resolve();
-		},
-		(reason) => {
-			reject();
-		});
-	});
+		reject("Reqired role not assigned to user")
+	})
 }

@@ -1,36 +1,64 @@
 {
-  "debug": false,
+  "debug": true,
   "port": 5336,
   "database": {
     "enable": true,
     "host": "localhost",
-    "port": "3306",
+    "port": "3342",
     "database": "rp_iam",
     "user": "rp_iam",
     "password": "password-example"
   },
-  "steamApiKey": "apikey",
-  "security": {
-    "enable": true,
-    "secret": "something-secure"
-  },
   "numVotes": 2,
-  "ips": {
-    "apiKey": "apikey",
-    "baseUrl": "https://myipssite.com/forum/api/",
-    "adminGroups": [ 1, 2, 3 ],
-    "dmSender": 1234,
-    "donorRoles": [ 1 ]
-  },
   "discord": {
-    "apiKey": "apikey",
+    "apiKey": "discord-bot-key",
     "guildId": "1234",
-    "webhookUrl": "https://discordapp.com/api/webhooks/blah"
+    "webhookUrl": "https://discordapp.com/api/webhooks/blah",
+    "baseUrl": "https://discord.com/api/v8/",
+    "clientId": "discord-client-id",
+    "clientSecret": "discord-client-secret",
+    "redirectUri": "discord-auth-redirect-uri",
+    "adminRoles": [ "role1ID" ],
+    "donorRoles": [ "role3ID" ]
   },
-  "bubbleCad": {
-    "apiKey": "apikey",
-    "baseUrl": "https://mycad.com/api/1.1/",
-    "entityType": "civilian",
-    "entityKey": "name"
+  "servers": {
+    "server-api-key-here": {
+      "id": 1,
+      "name": "RP Server Name",
+      "restricted": {
+        "role1ID": true,
+        "role2ID": true
+      },
+      "channel": "dev",
+      "region": "us-central",
+      "game": {
+        "id": 1,
+        "name": "FiveM",
+        "short": "fivem"
+      },
+      "groups": {
+        "role1ID": {
+          "Permission": {
+            "Group": "admin",
+            "Level": 99
+          },
+          "Queue": {
+            "Message": "Welcome, Admin!",
+            "Priority": 100
+          }
+        },
+        "role2ID": {
+          "Permission": {
+            "Group": "member",
+            "Level": 1
+          },
+          "Queue": {
+            "Message": "Welcome!",
+            "Priority": 0
+          }
+        }
+      },
+      "count": 2
+    }
   }
 }

@@ -133,7 +133,7 @@ exports.post = (url, body, headers) => {
 			url: url,
 			headers: headers,
 			ecdhCurve: 'auto',
-			formData: body,
+			body: body,
 			json: true
 			}, (err, res, data) => {
 				if (err) {
@@ -158,7 +158,46 @@ exports.post = (url, body, headers) => {
 	return promise;
 }
 
-exports.put = (url, headers) => {
+exports.postUrlEncoded = (url, body, headers) => {
+	// if no token, change to empty string
+	if (headers === undefined) {
+		headers = {};
+	}
+	
+	// perform request
+	var promise = new Promise((resolve, reject) => {
+		if (config.debug) console.log(`Making request to ${url}`);
+		
+		request.post({
+			url: url,
+			headers: headers,
+			ecdhCurve: 'auto',
+			form: body,
+			json: true
+			}, (err, res, data) => {
+				if (err) {
+					if (config.debug) console.log(`Error making request: ${err}`);
+					
+					reject('error');
+				} else if (res.statusCode == 500) {
+					if (config.debug) console.log(`Server error from: ${res.statusCode}`);
+					
+					reject('serverError');
+				}  else if (res.statusCode < 200 || res.statusCode > 299) {
+					if (config.debug) console.log(`Unexpected status code: ${res.statusCode}`);
+					if (config.debug) console.log(`Unexpected status code data: ` + JSON.stringify(data));
+					
+					reject('status');
+				} else {
+					resolve(data);
+				}
+		});
+	});
+	
+	return promise;
+}
+
+exports.put = (url, body, headers) => {
 	// if no token, change to empty string
 	if (headers === undefined) {
 		headers = {};
@@ -172,6 +211,7 @@ exports.put = (url, headers) => {
 			url: url,
 			headers: headers,
 			ecdhCurve: 'auto',
+			body: body,
 			json: true
 			}, (err, res, data) => {
 				if (err) {
