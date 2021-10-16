@@ -2,19 +2,6 @@
 const config = require('./config').config;
 const discord = require('./discord');
 
-// === user cache - poor man's object schema ===
-// {
-//	token: string,
-//	timestamp: datetime,
-//	expires: int,
-//	discordToken: string,
-//  id: snowflake,
-//  name: string,
-//  roles: [string]
-// }
-
-var userCache = [];
-
 exports.serverAuth = (header) => {
 	let authHeader = header.split(' ')[1]
 
@@ -50,10 +37,10 @@ exports.discordAuth = (code) => {
 					let user = discord.createUser(authData, userData, rolesData.roles)
 					resolve(user)
 				})
-				.catch((error) => {
+				.catch(() => {
 					// need to add to guild
 					discord.addUserToGuild(userData.id, authData.access_token)
-					.then((addData) => {
+					.then(() => {
 						discord.getDiscordRoles(userData.id)
 						.then((rolesData) => {
 							let user = discord.createUser(authData, userData, rolesData.roles)
@@ -105,7 +92,7 @@ exports.checkRoles = (userRoles, desiredRoles) => {
 		desiredRoles.forEach((roleId) => {
 			if (userRoles.indexOf(roleId) >= 0) {
 				resolve(true)
-				return;
+				return
 			}
 		});
 

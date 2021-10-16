@@ -1,0 +1,1 @@
+Example acceptance message
